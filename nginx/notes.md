@@ -64,4 +64,73 @@
       }
    ```
 
-8.
+### Serving Static content with Nginx
+
+1. Since nginx is a web server, it starts serving index.html from a particular folder configured in the nginx.conf
+2. `root` property in the `nginx.conf` file tells where the website exists. Nginx will start serving the index.html file from the directly mentioned after root
+
+   ```
+    events {
+
+    }
+    http {
+
+        server {
+            # The server is listening at port 80
+            listen 80;
+            # This will handle all the requests
+            server_name _;
+            # root tells where my website exists
+            root /etc/nginx/website;
+        }
+    }
+
+   ```
+
+3. If explicitly no types are specified, then nginx by default considers all files as text/plain except the html files where the file type, by default, it sends as text/html.
+4. We need to explicitly specify the file type and their extension so the nginx sends correct file types. Like:
+
+   ```
+    events {
+
+    }
+    http {
+        types {
+            text/css css;
+            text/html5 html;
+        }
+
+        server {
+            # The server is listening at port 80
+            listen 80;
+            # This will handle all the requests
+            server_name _;
+            # root tells where my website exists
+            root /etc/nginx/website;
+        }
+    }
+   ```
+
+5. Here above, we have explicitly asked nginx to return content-type of html and css file as text/html5 and text/css
+6. There is a file named `mime.types` in nginx folder. This file contains the file types defined for most of the files in it. So instead of explicitly writing all file types in our nginx.conf, we can sinply include this file in nginx.conf. Like:
+
+   ```
+    events {
+
+    }
+    http {
+        include /etc/nginx/mime.types;
+
+        server {
+            # The server is listening at port 80
+            listen 80;
+            # This will handle all the requests
+            server_name _;
+            # root tells where my website exists
+            root /etc/nginx/website;
+        }
+    }
+
+   ```
+
+7.
