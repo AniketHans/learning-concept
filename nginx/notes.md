@@ -133,4 +133,4 @@
 
    ```
 
-7.
+7. For setting up SSL and nginx, follow the following video `https://www.youtube.com/watch?v=ofBFl4M4BFk`
