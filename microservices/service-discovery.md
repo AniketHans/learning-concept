@@ -74,4 +74,13 @@
 
 ### Sidecars
 
-1.
+1. These are very useful when transitioning from Monolith to Microservices and also while developing new microservices
+2. Sidecars are supporting processes or services that are deployed with the primary application on the same physical host
+3. A sidecar share same physical infrastructure, memory and network space with the primary process
+4. It is language independent to the primary process.
+5. Suppose you have a legacy application serving http traffic and you want to upgarde it to serve https traffic. Now, to achieve this, either rewrite the logic inside the legacy application or deploy a sidecar along with the legacy application and reroute the traffic to the sidecar. The sidecar can receive the Https request and acts as a proxy to commicate with the legacy service for processing of the request.  
+   ![Sidecar handling the https traffic and acting as proxy](./resources/images/sidecar-handling-https.png)
+6. Sidecars are generally used as proxies to the main application
+7. They can have multiple functionalities like load balancing, retry logic etc assigned to them
+8. Cross microservice communication is also done using sidecars where if a service, say S1, wants to communicate with another service, say S2, it will first talk to its own sidecar SS1 and the SS1 sidecar will forward the request to S2's sidecar SS2. SS2 will then communicate with S2 fetch the result and send it back to SS1 and SS1 will finally forward the response to S1. This is possible when all the sidecars are connected to the control plane which contains info of all the sidecars and their corresponding services in the system
+9. Genrally common logics like circuit breaking, retry logic, logging etc are ofloaded to sidecars and the main service can focus on the core logic. Otherwise, all the services need to incorporate the common logic in them which means all the services will contain that redundant code handling retry logic, logging etc in them.
