@@ -105,4 +105,68 @@
 
 ## 4NF
 
-1.
+1. Suppose we have we website called designmybirshouse.com where we offer, user, 3 types of birdhouses to choose from. Each bird house has a set of available colors and styles to choose from.
+2. Thus we store all theses combinations in the table then our table will somewhat look like this:  
+   ![Birdhouse example](./resources/images/normalization/birdhouse-eg.png)
+3. Suppose for model Tweety, we inroduce a new color, say green, then we should have 2 more entries in the table, (tweety, green, bungalow) and (tweety, green, duplex). If somehow we fail to add anyone of the entries in the table, this will lead to missing attribtes and data inconsistency
+4. In our case, each model has a specific set of available colors. This kind of dependency is called **Multi-value dependency**. This is expressed as a double headed arrow, `Model` -->> `Color`
+5. This is the same case with styles as well, `Model` -->> `Styles`
+
+### 4NF states:
+
+1. The only kind of multivalue dependencies allowed to be present in a table are multivalued dependecies on the key.
+2. Since, model is not the key but its a part of the key only. So the table is not present in the 4NF
+3. The solution is to split things up into multiple tables:  
+   ![4NF fix](./resources/images/normalization/4NF-fix.png)
+
+## 5NF
+
+1. A relation is in 5NF (Project-Join Normal Form) if it is in 4NF and cannot be decomposed into smaller tables without losing data or creating redundancy.
+2. It deals with join dependency: when data can be reconstructed from smaller pieces, we should store it in those smaller pieces instead of redundantly.
+3. Suppose we have a table storing consultants, projects, and skills:
+   1. | Consultant | Project | Skill  |
+      | ---------- | ------- | ------ |
+      | Aman       | Banking | SQL    |
+      | Aman       | Banking | Python |
+      | Aman       | Retail  | SQL    |
+      | Neha       | Banking | SQL    |
+      | Neha       | Retail  | Python |
+4. Problem (Without 5NF)
+   1. This table shows which consultant works on which project and which skills they use.
+   2. But here, there’s redundancy. For example, if Aman works on Banking and has skills SQL and Python, both must be repeated with Banking.
+   3. If we remove one row, we might lose information about either the skill or the project.
+5. 5NF Decomposition
+
+   1. We split the table into three smaller relations:
+
+      1. Consultant–Project
+         | Consultant | Project |
+         |------------|-----------|
+         | Aman | Banking |
+         | Aman | Retail |
+         | Neha | Banking |
+         | Neha | Retail |
+
+      2. Consultant–Skill
+         | Consultant | Skill |
+         |------------|---------|
+         | Aman | SQL |
+         | Aman | Python |
+         | Neha | SQL |
+         | Neha | Python |
+
+      3. Project–Skill
+         | Project | Skill |
+         |-----------|---------|
+         | Banking | SQL |
+         | Banking | Python |
+         | Retail | SQL |
+         | Retail | Python |
+
+   2. Here:
+      1. Now, we don’t repeat the same data unnecessarily.
+      2. By joining these three tables, we can reconstruct the original relation.
+
+## All Normal forms in short
+
+![Summary](./resources/images/normalization/summary.png)
