@@ -59,9 +59,13 @@
 ## Types of Authentication
 
 1. Stateful authentication
+   1. Ideal for Web app based authentication
 2. Stateless authentication
+   1. Ideal for Mobile apps and Apis
 3. API key
+   1. ideal for machine to machine communication
 4. OAuth2.0
+   1. Ideal for 3rd party intergrations
 
 ### Stateful Authentication
 
@@ -110,6 +114,7 @@
 4. One website started needing access to other websites for example, reminder application on your phone may need access to your gmail to scan and keep record of different events like holidays, flight bookings, movie bookings etc to remind you about the event on time, similary, a social media app like instagram, twitter etc wants to import your contacts from native contacts app or google contacts. These accesses are needed programmatically by the applications
 5. Inorder for one application to get access to another platform, intially platforms started sharing the user passwords amound themselves which lead to issues like the other application will get full access of user's account and also there is no way to limit the access of resources. The user needs to change the password so that the other application's access can be revoked from an application. This problem is known as Delegation problem
 6. OAuth
+
    1. Tokens are used here which provide limited access of one platform to the other like we can give access a readonly google contacts permission to another application. The application will only be able to read the google contacts and will not be able to perform any other operation in your google account
    2. Diagram:  
       ![OAuth](./authentication-authorization/OAuth.png)
@@ -117,4 +122,122 @@
       2. Resource owner is the user who owns the data i.e. you.
       3. Client is the application that is requesting access of your resource for example, Instagram is requesting access to your google contacts. Instagram is the client here
       4. Resource server is the server where your resources are stored for example Google server having your google account info
-      5. Authorization server is the server that issues the token after authenticating the user
+      5. Authorization server is the server that issues the token after authenticating the user.
+      6. Resource server and Authorization server can hosted on the same server but companies like Googlw who has many apps like Google docs, photos etc prefer to have a centralized authorization server which provide access tokens for all their applications
+   3. OAuth1.0 flow:
+      1. Suppose you are using Instagram and it requires access to you google photos
+      2. Instagram (client) will send a signed request to the google's request token api to get a temporary request token i.e `Client (Consumer) obtains a Request Token from the Service Provider (server).`
+      3. Then, instagram redirects the user to authorizer server of google to login and approve the consent to give access to google photo i.e `The User is redirected to the Service Provider to authorize the Request Token.`
+      4. After approval, the google will redirect the user back to instagram with a `verifier code` i.e `After authorization, the Service Provider redirects the User back to the Client with a verifier.`
+      5. Now, Instagram will use both Request token and Verifier code to get the `Permanent access token` from google i.e `The Client exchanges the authorized Request Token + Verifier for an Access Token.`
+      6. Now, all the subsequesnt request to google for photos will be signed using the permanent access token i.e.`The Client signs API requests with the Access Token + Consumer Secret to access protected resources.`
+   4. Unlike OAuth 2.0, OAuth 1.0a uses cryptographic signatures and does not issue a Bearer token. Also, revoking access from the permanent access token is not easy so it would be catastrophic if the permanent access token is compromised
+   5. OAuth 2.0:
+
+      1. It introduced Bearer tokens
+      2. It also allowed devs to choose flows based on the app type like the flow will be different for mobile apps and webapps
+      3. Some of the flows are:
+         1. Auth code flow, for server side apps
+         2. Implicit flow, for browser based apps (discouraged due to security risks)
+         3. Client credentials flow, for server to server communication without any human interactions
+         4. Device code flow, in devices where we have limited input like smart TVs
+      4. OAuth solved the issue of authorization not authentication so OIDC (Open ID Connect) is built on top of OAuth2.0 to fill the gap of authentication.
+      5. OIDC extended OAuth2.0 by introducing ID token (JWT token)
+      6. Steps:
+
+         1. Suppose you are building an app `PhotoPrintApp` - a website that lets users print photos from their Google Drive
+         2. So first, you need to register your app to Google api console by providing name of the app and a callback url like `http://photoprintapp.com/oauth/callback`. The callback url is the redirect uri where the tokens will be send by Google authenticator server
+         3. The google api console will generate a client id and client secret for the photoprintapp that will be used by the app for future communications. These client id and secret can be considered as username and password
+         4. Now, the user will initiate the integration flow between google drive and photoprintapp. The flow starts with the app getting redirected , with a request containing the client id of photo app, redirect uri/callback url, resposne type and the resource that the app needs access to. The request is to get an access token from the google's authorization server.
+
+            ```
+                GET https://accounts.google.com/o/oauth2/v2/auth
+                ?client_id=1234567890-abcdef.apps.googleusercontent.com
+                &redirect_uri=https://photoprintapp.com/oauth2/callback
+                &response_type=code
+                &scope=https://www.googleapis.com/auth/drive.readonly
+                &state=xyz123
+
+            ```
+
+         5. The user will be presented with the scope where the user can change the level of access of google drive, he wants to give to the photo app
+         6. Once the user specifies the scope, the google authorization server redirects the request to the photo app's callback url with a authorization code. The authorization code is ver short lived
+
+            ```
+                https://photoprintapp.com/oauth2/callback
+                ?code=4/0AX4XfWjYpJxyzABC123
+                &state=xyz123
+            ```
+
+         7. The photo app (client) will take the authorization code and send it again to the google's authorization server for an access token. The request contains the photo app's client id and secret as well
+
+            ```
+                POST /token HTTP/1.1
+                Host: oauth2.googleapis.com
+                Content-Type: application/x-www-form-urlencoded
+
+                code=4/0AX4XfWjYpJxyzABC123
+                &client_id=1234567890-abcdef.apps.googleusercontent.com
+                &client_secret=shhh_its_a_secret
+                &redirect_uri=https://photoprintapp.com/oauth2/callback
+                &grant_type=authorization_code
+
+            ```
+
+         8. The google's authorization server will respond with access token along with its expiry time and a refresh token. Generally the access token are short lived, may be upto 1 hr, but the refresh tokens are long lived, ranging from 14 to 90 days. Once the access token is expired and the refresh token is valid, the photo app can again generate the access token directly from google's authorization server using the refresh token and need not go through the above whole flow of first generating the authorization token and then getting the access token. The access token type is `Bearer` that means any one with the token can get the access to resource.
+
+            ```
+                {
+                    "access_token": "ya29.a0AfH6SMCfEXAMPLETOKEN",
+                    "expires_in": 3599,
+                    "refresh_token": "1//0gXrfreshTokenABC",
+                    "scope": "https://www.googleapis.com/auth/drive.readonly",
+                    "token_type": "Bearer"
+                }
+
+            ```
+
+         9. After getting the acces token, photoprintapp can use the access token to access the resouces of the user/owner by calling the resource server, google drive's apis in our case. The access token will be used to authorize the requests from photo app to google drive
+
+            ```
+                GET /drive/v3/files HTTP/1.1
+                Host: www.googleapis.com
+                Authorization: Bearer ya29.a0AfH6SMCfEXAMPLETOKEN
+
+            ```
+
+      7. OAuth 2.0 flow with OIDC:
+         1. Client Application redirects the User (End-User) to the Authorization Server / OpenID Provider with:
+            1. response_type=code
+            2. scope=openid profile email …
+            3. client_id + redirect_uri
+         2. Authorization Server authenticates the user and obtains consent.
+         3. Authorization Server redirects back to the Client with an Authorization Code.
+         4. Client exchanges the code (and its client secret) at the Token Endpoint for:
+            1. Access Token (OAuth 2.0)
+            2. ID Token (OIDC)
+            3. optionally a Refresh Token
+         5. Client validates the ID Token (signature, issuer, audience, nonce).
+         6. Client uses the Access Token to access protected APIs; it uses the ID Token for authentication of the user.
+
+## Authorization
+
+1. Authorization refers to the giving specific permissions to the user so we can limit a user's capabilities on the platform
+2. Like some users can be given read and write access to some notes application while others can get only read access
+3. RBAC (Role Based Access Control) is one of the most famous authorization techniques used. A platform can have many role like Admin, User, Moderator etc and each role is assigned different set of permissions.
+4. The users are assigned some role by the server after account creation based on the user's usecase
+5. After user authentication, the server will check the role and permissions of the user based on the user info it gets after authentication
+6. The server than passes the role and permissions to next set of api middlewares so it can be decided if the user has access to the api or not
+
+### Error Messages
+
+1. During the authentication process, the server might encounter some errors like wrong username or password or the user's account is locked due to many failed attempts
+2. If we pass on the exact error messages to the user like `incorrect username`, `incorrect password` then it will be beneficial to the user but if there is a hacker trying to login on behalf of user then it will give some hints to the hacker
+3. So better show generalized messages like `Incorrect username or password` or `Authentication failed` that does not give hints about what is wrong exactly
+
+### Timming attacks
+
+1. In Authentication, the user sends its username and password for login. Now, if the username is wrong and does not exist in DB then the generalized error message will be sent. If the username is correct, then the password is validated by first hashing it and then checking the hashed password in the DB against the username.
+2. Clearly, the username validation takes less time than the password validation. So if the hacker entered wrong username then the error message will reach early as compared to if wrong password is entered.
+3. Hacker might time the error response and know if the username could be wrong or the password
+4. So, the authentication systems must introduce measures/delays to equalize the response times of whether the username is wrong or password
