@@ -88,4 +88,3 @@
    1. Since it does not involve HTTP status codes so you have to maintain some standards of flagging the errors and also propogate same to the client
 5. No native browser support
    1. Currently browsers does not support gRPC thats why gRPCs are ideal for server to server communications
-6.
