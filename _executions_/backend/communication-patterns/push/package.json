@@ -1,0 +1,19 @@
+{
+  "name": "push",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "server": "node server.js",
+    "client": "node client.js"
+  },
+  "dependencies": {
+    "uuid": "^14.0.0",
+    "websocket": "^1.0.35",
+    "ws": "^8.20.1"
+  }
+}
